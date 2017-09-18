@@ -4,7 +4,7 @@ deploy:
   api_key:
     secure: npx5+TEmBG6NFei69JIfmKg7pVP2pPV3LYq2o+bvJ144fRnfI8SLPuw9cuhJvB7+0RoBJqDOGDa6RmZeBFX0lpllwpSazxLD9U+IH6e2eh0Z+dR4dRXXbiw+5wrmBthut9y9UAy7TMPiKC0S0uEalD7+am9QkxjikpQdUPTVpynSozjq5bLLiJL0jRYX5EO0Ghzc4pJtMdM0UhyiNQjCzZX2nLCtu9hiNsInzGFJzj//QnKB+/NTkiVtHQW13F8A1nRDhCPa6GGy2ZvmMQD/GXF1fyE1LPHg41WihAzc+t7ZK7fC5ArQ+Mip9IG+hA+LKicinGv2WhnXE3btdrtquDz5ZJrT0t7rL8ZmhDNw+r9a0pNjqFRFY0lBZIecToIf2pyiEKhBpXlMfk6R39dEPvLiQOIabOAO4nGKKTjgQ3yePqTJqDSoguQoXtfzWvtdvtYIPDmJPNP2Xk+IgmwGQbn3t1MJmV3ZtrziBCIbkTOBhBRPgoefOwfpAZdvgpfucFhnvnJTuXF9YerJgLIkT3TzeUvo9xjTjU1gm15EIOEK/M4DBnpj48gDva6cVgpys4UdNq+6+xZNMzDAwhNypOPnowXt+AN3HicAEAbrRo/8luIXa7c4FQqpNb6o1ZPt/A2bQDK2uJ+PHbjVbruGfsMnKGSzHPvQUNFmr8RasMY=
   file_glob: true
-    file: GliderRider-*.jar
+    file: "GliderRider-*.jar"
     skip_cleanup: true
     on:
       tags: true
