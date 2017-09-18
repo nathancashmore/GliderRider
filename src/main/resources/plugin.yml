@@ -1,0 +1,35 @@
+name: GliderRider
+main: uk.co.staticvoid.gliderrider.GliderRider
+version: 0.1
+author: MajorSlackmore
+commands:
+   checkpoint-create:
+      description: Create a checkpoint at your current location.
+      usage: /checkpoint-create <unique-name> <course-name> [ start | stage | finish ]
+      permission: op
+      permission-message: You need to be op to run this
+   checkpoint-list:
+      description: List the currently registered checkpoints
+      usage: /checkpoint-list
+      permission: op
+      permission-message: You need to be op to run this
+   course-remove:
+      description: Remove all of the checkpoints for a given course
+      usage: /course-remove <course-name>
+      permission: op
+      permission-message: You need to be op to run this
+   checkpoint-radius:
+      description: Resize the radius of the checkpoint
+      usage: /checkpoint-radius <size>
+      permission: op
+      permission-message: You need to be op to run this
+   course-records:
+      description: List all of the records for a course
+      usage: /course-records <course>
+      permission: op
+      permission-message: You need to be op to run this
+   records-remove:
+      description: Remove all records for a particular course
+      usage: /records-remove <course>
+      permission: op
+      permission-message: You need to be op to run this
