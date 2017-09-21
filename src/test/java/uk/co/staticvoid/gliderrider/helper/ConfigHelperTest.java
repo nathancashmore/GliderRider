@@ -58,7 +58,7 @@ import static org.unitils.reflectionassert.ReflectionAssert.assertReflectionEqua
 
     @Test
     public void shouldNotSaveDefaultIfOnePresent() throws IOException {
-        addConfigFileToOutputDirectory();
+        Files.createFile(new File(TEST_OUTPUT_FOLDER, TEST_FILE_NAME).toPath());
 
         underTest.saveDefaultConfig();
         verify(plugin, times(0)).saveResource(TEST_FILE_NAME, false);
@@ -104,11 +104,6 @@ import static org.unitils.reflectionassert.ReflectionAssert.assertReflectionEqua
     @After
     public void cleanUp() throws Exception{
         removeConfigFileFromOutputDirectory();
-    }
-
-
-    private void addConfigFileToOutputDirectory() throws IOException {
-        Files.createFile(new File(TEST_OUTPUT_FOLDER, TEST_FILE_NAME).toPath());
     }
 
     private void removeConfigFileFromOutputDirectory() throws IOException {
