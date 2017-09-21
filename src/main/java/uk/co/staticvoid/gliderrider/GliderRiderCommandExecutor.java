@@ -34,33 +34,34 @@ public class GliderRiderCommandExecutor implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
         try {
-            validateInputFromPlayer(sender);
 
             switch (cmd.getName().toLowerCase()) {
                 case "checkpoint-create":
+                    validateInputFromPlayer(sender);
                     validateCheckpointType(args[2]);
                     validateMustHaveThreeArguments(args);
                     createCheckpoint(args[0], args[1], args[2].toUpperCase(), (Player) sender);
                     return true;
                 case "checkpoint-list":
-                    listCheckpoints((Player) sender);
+                    listCheckpoints(sender);
                     return true;
                 case "course-remove":
                     validateMustHaveOneArgument(args);
-                    removeCourse(args[0], (Player) sender);
-                    removeRecords(args[0], (Player) sender);
+                    removeCourse(args[0], sender);
+                    removeRecords(args[0], sender);
                     return true;
                 case "checkpoint-radius":
+                    validateInputFromPlayer(sender);
                     validateMustHaveOneArgument(args);
                     resizeCheckpoint(args[0], (Player) sender);
                     return true;
                 case "course-records":
                     validateMustHaveOneArgument(args);
-                    listCourseRecords(args[0], (Player) sender);
+                    listCourseRecords(args[0], sender);
                     return true;
-                case "records-remove":
+                    case "records-remove":
                     validateMustHaveOneArgument(args);
-                    removeRecords(args[0], (Player) sender);
+                    removeRecords(args[0], sender);
                     return true;
                 default:
                     return false;
@@ -72,17 +73,17 @@ public class GliderRiderCommandExecutor implements CommandExecutor {
         }
     }
 
-    private void removeRecords(String course, Player player) {
+    private void removeRecords(String course, CommandSender commandSender) {
         recordManager.removeRecord(course);
-        player.sendMessage("Records for " + course + " removed");
+        commandSender.sendMessage("Records for " + course + " removed");
     }
 
-    private void listCourseRecords(String course, Player player) {
+    private void listCourseRecords(String course, CommandSender commandSender) {
         List<CourseTime> courseTimeList = recordManager.getCourseTimes(course);
 
-        player.sendMessage("-- Leaderboard for " + course + " --\n");
+        commandSender.sendMessage("-- Leaderboard for " + course + " --\n");
         courseTimeList.forEach(tl -> {
-            player.sendMessage(tl.getPlayer() + " - " + formatter.format(tl.getTime()) + "\n");
+            commandSender.sendMessage(tl.getPlayer() + " - " + formatter.format(tl.getTime()) + "\n");
         });
     }
 
@@ -100,21 +101,21 @@ public class GliderRiderCommandExecutor implements CommandExecutor {
         }
     }
 
-    private void listCheckpoints(Player player) {
+    private void listCheckpoints(CommandSender commandSender) {
         List<Checkpoint> checkpointList = checkpointManager.getCheckpoints();
 
         if (checkpointList.isEmpty()) {
-            player.sendMessage("There are no checkpoints");
+            commandSender.sendMessage("There are no checkpoints");
         } else {
-            player.sendMessage("--- Checkpoints ---");
-            checkpointList.forEach(cp -> player.sendMessage(cp.toString()));
+            commandSender.sendMessage("--- Checkpoints ---");
+            checkpointList.forEach(cp -> commandSender.sendMessage(cp.toString()));
         }
     }
 
-    private void removeCourse(String course, Player player) {
+    private void removeCourse(String course, CommandSender commandSender) {
         checkpointManager.removeCourse(course);
-        player.sendMessage("Course " + course + " removed");
-        listCheckpoints(player);
+        commandSender.sendMessage("Course " + course + " removed");
+        listCheckpoints(commandSender);
     }
 
     private void createCheckpoint(String name, String course, String type, Player player) {

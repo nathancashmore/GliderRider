@@ -2,8 +2,8 @@ package uk.co.staticvoid.gliderrider;
 
 import org.bukkit.World;
 import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.entity.CaveSpider;
 import org.bukkit.entity.Player;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +31,8 @@ public class GliderRiderCommandExecutorTest {
     private RecordManager recordManager = mock(RecordManager.class);
 
     private Player player = mock(Player.class);
-    private CaveSpider caveSpider = mock(CaveSpider.class);
+    private CommandSender commandSender = mock(CommandSender.class);
+
     private org.bukkit.Location location = mock(org.bukkit.Location.class);
     private World world = mock(World.class);
     private FileConfiguration fileConfiguration = mock(FileConfiguration.class);
@@ -67,7 +68,7 @@ public class GliderRiderCommandExecutorTest {
         when(command.getName()).thenReturn("course-remove");
         String[] inputArgs = {"test-checkpoint"};
 
-        assertThat(underTest.onCommand(player, command, "",  inputArgs), is(true));
+        assertThat(underTest.onCommand(commandSender, command, "",  inputArgs), is(true));
     }
 
     @Test
@@ -75,7 +76,7 @@ public class GliderRiderCommandExecutorTest {
         when(command.getName()).thenReturn("checkpoint-list");
 
         String[] inputArgs = {};
-        assertThat(underTest.onCommand(player, command, "", inputArgs ), is(true));
+        assertThat(underTest.onCommand(commandSender, command, "", inputArgs ), is(true));
     }
 
     @Test
@@ -91,7 +92,7 @@ public class GliderRiderCommandExecutorTest {
         when(command.getName()).thenReturn("course-records");
 
         String[] inputArgs = { "x" };
-        assertThat(underTest.onCommand(player, command, "", inputArgs ), is(true));
+        assertThat(underTest.onCommand(commandSender, command, "", inputArgs ), is(true));
     }
 
     @Test
@@ -99,15 +100,23 @@ public class GliderRiderCommandExecutorTest {
         when(command.getName()).thenReturn("records-remove");
 
         String[] inputArgs = { "x" };
-        assertThat(underTest.onCommand(player, command, "", inputArgs ), is(true));
+        assertThat(underTest.onCommand(commandSender, command, "", inputArgs ), is(true));
     }
 
     @Test
-    public void mustOnlyBeExecutedByAPlayer() {
+    public void mustBeAPlayerToCreateACheckpoint() {
         when(command.getName()).thenReturn("checkpoint-create");
-        String[] inputArgs = {"test-course", "start"};
+        String[] inputArgs = {"test-checkpoint", "test-course", "start"};
 
-        assertThat(underTest.onCommand(caveSpider, command, "",  inputArgs), is(false));
+        assertThat(underTest.onCommand(commandSender, command, "",  inputArgs), is(false));
+    }
+
+    @Test
+    public void mustBeAPlayerToChangeCheckpointRadius() {
+        when(command.getName()).thenReturn("checkpoint-radius");
+
+        String[] inputArgs = { "10" };
+        assertThat(underTest.onCommand(commandSender, command, "", inputArgs ), is(false));
     }
 
     @Test
@@ -115,7 +124,7 @@ public class GliderRiderCommandExecutorTest {
         when(command.getName()).thenReturn("checkpoint-create");
         String[] inputArgs = {"test-checkpoint", "test-course"};
 
-        assertThat(underTest.onCommand(player, command, "", inputArgs), is(false));
+        assertThat(underTest.onCommand(commandSender, command, "", inputArgs), is(false));
     }
 
     @Test
@@ -123,7 +132,7 @@ public class GliderRiderCommandExecutorTest {
         when(command.getName()).thenReturn("checkpoint-create");
         String[] inputArgs = {"test-course", "CRAZY"};
 
-        assertThat(underTest.onCommand(player, command, "", inputArgs), is(false));
+        assertThat(underTest.onCommand(commandSender, command, "", inputArgs), is(false));
     }
 
     @Test
@@ -131,7 +140,7 @@ public class GliderRiderCommandExecutorTest {
         when(command.getName()).thenReturn("checkpoint-remove-course");
         String[] inputArgs = {};
 
-        assertThat(underTest.onCommand(player, command, "", inputArgs), is(false));
+        assertThat(underTest.onCommand(commandSender, command, "", inputArgs), is(false));
     }
 
     @Test
@@ -139,7 +148,7 @@ public class GliderRiderCommandExecutorTest {
         when(command.getName()).thenReturn("checkpoint-radius");
         String[] inputArgs = {};
 
-        assertThat(underTest.onCommand(player, command, "", inputArgs), is(false));
+        assertThat(underTest.onCommand(commandSender, command, "", inputArgs), is(false));
     }
 
     @Test
@@ -147,7 +156,7 @@ public class GliderRiderCommandExecutorTest {
         when(command.getName()).thenReturn("checkpoint-radius");
         String[] inputArgs = {"NotANumber"};
 
-        assertThat(underTest.onCommand(player, command, "", inputArgs), is(false));
+        assertThat(underTest.onCommand(commandSender, command, "", inputArgs), is(false));
     }
 
 }
