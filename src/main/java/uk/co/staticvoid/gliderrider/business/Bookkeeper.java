@@ -3,7 +3,6 @@ package uk.co.staticvoid.gliderrider.business;
 import uk.co.staticvoid.gliderrider.domain.Attempt;
 import uk.co.staticvoid.gliderrider.domain.Checkpoint;
 import uk.co.staticvoid.gliderrider.domain.CheckpointType;
-import uk.co.staticvoid.gliderrider.exception.PlayerCheatedException;
 import uk.co.staticvoid.gliderrider.helper.TimeProvider;
 
 import java.util.*;
@@ -23,7 +22,7 @@ public class Bookkeeper {
         this.checkpointManager = checkpointManager;
     }
 
-    public void seen(String player, Checkpoint checkpoint) throws PlayerCheatedException {
+    public void seen(String player, Checkpoint checkpoint) {
         Optional<Attempt> existingAttempt = getAttempt(player, checkpoint.getCourse());
 
         if(existingAttempt.isPresent() && !existingAttempt.get().isFinished()) {
@@ -52,12 +51,13 @@ public class Bookkeeper {
         attemptList.removeAll(oldAttempts);
     }
 
-    private void finaliseAttempt(Attempt attempt) throws PlayerCheatedException {
+    private void finaliseAttempt(Attempt attempt) {
         attempt.setFinished(true);
-        if(checkpointManager.getCourse(attempt.getCourse()).size() == attempt.getTimeRecord().size()) {
+
+        if(checkpointManager.getNoOfCheckpoints(attempt.getCourse()) == attempt.getNoOfCheckpointsPassed()) {
             recordManager.addRecord(attempt);
         } else {
-            throw new PlayerCheatedException("Failed the attempt as you missed checkpoints");
+            attempt.setFailed(true);
         }
     }
 

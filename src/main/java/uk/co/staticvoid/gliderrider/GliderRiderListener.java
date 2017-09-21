@@ -10,14 +10,11 @@ import uk.co.staticvoid.gliderrider.business.CheckpointManager;
 import uk.co.staticvoid.gliderrider.business.RecordManager;
 import uk.co.staticvoid.gliderrider.domain.Attempt;
 import uk.co.staticvoid.gliderrider.domain.Checkpoint;
-import uk.co.staticvoid.gliderrider.domain.CourseTime;
-import uk.co.staticvoid.gliderrider.exception.PlayerCheatedException;
 import uk.co.staticvoid.gliderrider.helper.LocationHelper;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -46,13 +43,9 @@ public final class GliderRiderListener implements Listener {
         checkpointManager.isCheckpoint(
                 LocationHelper.toPluginLocation(player.getLocation())).ifPresent(
                 cp -> {
-                    try {
-                        bookkeeper.seen(player.getDisplayName(), cp);
-                    } catch (PlayerCheatedException e) {
-                        player.sendMessage(e.getMessage());
-                    }
+                    bookkeeper.seen(player.getDisplayName(), cp);
 
-                    if(!cp.getName().equals(lastSeen.get(player.getDisplayName()))) {
+                    if (!cp.getName().equals(lastSeen.get(player.getDisplayName()))) {
                         informPlayerOfCheckpoint(player, cp);
                     }
                 });
@@ -65,23 +58,14 @@ public final class GliderRiderListener implements Listener {
         attempt.ifPresent(att -> {
             Long checkpointTime = att.getCourseTime(cp.getName());
 
-            if (checkpointTime != null) {
+            if(att.isFailed()) {
+                player.sendMessage("Attempt failed");
+
+            } else if (checkpointTime != null) {
                 player.sendMessage(cp.getName() + " - " + timeDisplay.format(checkpointTime));
                 lastSeen.put(player.getDisplayName(), cp.getName());
             }
-
-            if(att.isFinished()) {
-                listCourseRecords(cp.getCourse(), player);
-            }
         });
     }
 
-    private void listCourseRecords(String course, Player player) {
-        List<CourseTime> courseTimeList = recordManager.getCourseTimes(course);
-
-        player.sendMessage("-- Leaderboard for " + course + " --\n");
-        courseTimeList.forEach(tl -> {
-            player.sendMessage(tl.getPlayer() + " - " + timeDisplay.format(tl.getTime()) + "\n");
-        });
-    }
 }

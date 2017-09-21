@@ -43,6 +43,14 @@ public class CheckpointManagerTest {
     private static final String TEST_OUTPUT_FOLDER = "./src/test/output/";
     private static final String TEST_FILE_NAME = "checkpoint.yml";
 
+    public static final String TEST_WORLD = "TestWorld";
+    public static final String TEST_CHECKPOINT = "Test-Checkpoint";
+    public static final String TEST_COURSE = "Test-Course";
+
+    public static final String START_STAGE_NAME = "START";
+    public static final String STAGE_STAGE_NAME = "STAGE";
+    public static final String FINISH_STAGE_NAME = "FINISH";
+
     private GliderRider plugin = mock(GliderRider.class);
     private FileConfiguration fileConfiguration = mock(FileConfiguration.class);
 
@@ -64,16 +72,16 @@ public class CheckpointManagerTest {
 
         when(plugin.getDataFolder()).thenReturn(new File(TEST_OUTPUT_FOLDER));
 
-        randomLocation = new Location("TestWorld", 10,10,10,N);
-        sampleCheckpoint = new Checkpoint("Test-Checkpoint", "Test-Course", CheckpointType.START, randomLocation, RADIUS);
+        randomLocation = new Location(TEST_WORLD, 10,10,10,N);
+        sampleCheckpoint = new Checkpoint(TEST_CHECKPOINT, TEST_COURSE, CheckpointType.START, randomLocation, RADIUS);
         underTest = new CheckpointManager(plugin, configHelper, checkpointArtist);
     }
 
     @Test
     public void createCheckpoint() {
-        Checkpoint start = CheckpointBuilder.aCheckpoint().from(sampleCheckpoint).withName("START").withType(CheckpointType.START).build();
-        Checkpoint stage = CheckpointBuilder.aCheckpoint().from(sampleCheckpoint).withName("STAGE").withType(CheckpointType.STAGE).build();
-        Checkpoint finish = CheckpointBuilder.aCheckpoint().from(sampleCheckpoint).withName("FINISH").withType(CheckpointType.FINISH).build();
+        Checkpoint start = CheckpointBuilder.aCheckpoint().from(sampleCheckpoint).withName(START_STAGE_NAME).withType(CheckpointType.START).build();
+        Checkpoint stage = CheckpointBuilder.aCheckpoint().from(sampleCheckpoint).withName(STAGE_STAGE_NAME).withType(CheckpointType.STAGE).build();
+        Checkpoint finish = CheckpointBuilder.aCheckpoint().from(sampleCheckpoint).withName(FINISH_STAGE_NAME).withType(CheckpointType.FINISH).build();
 
         underTest.createCheckpoint(start.getName(),start.getCourse(), start.getType(), start.getLocation());
         underTest.createCheckpoint(stage.getName(),stage.getCourse(), stage.getType(), stage.getLocation());
@@ -95,9 +103,9 @@ public class CheckpointManagerTest {
 
     @Test(expected = CourseAlreadyCompleteException.class)
     public void shouldNotBeAbleToCreateStageAfterFinishCheckpointCreated() {
-        Checkpoint start = CheckpointBuilder.aCheckpoint().from(sampleCheckpoint).withName("START").withType(CheckpointType.START).build();
-        Checkpoint stage = CheckpointBuilder.aCheckpoint().from(sampleCheckpoint).withName("STAGE").withType(CheckpointType.STAGE).build();
-        Checkpoint finish = CheckpointBuilder.aCheckpoint().from(sampleCheckpoint).withName("FINISH").withType(CheckpointType.FINISH).build();
+        Checkpoint start = CheckpointBuilder.aCheckpoint().from(sampleCheckpoint).withName(STAGE_STAGE_NAME).withType(CheckpointType.START).build();
+        Checkpoint stage = CheckpointBuilder.aCheckpoint().from(sampleCheckpoint).withName(STAGE_STAGE_NAME).withType(CheckpointType.STAGE).build();
+        Checkpoint finish = CheckpointBuilder.aCheckpoint().from(sampleCheckpoint).withName(FINISH_STAGE_NAME).withType(CheckpointType.FINISH).build();
 
         underTest.createCheckpoint(start.getName(),start.getCourse(), start.getType(), start.getLocation());
         underTest.createCheckpoint(finish.getName(),finish.getCourse(), finish.getType(), finish.getLocation());
@@ -131,11 +139,11 @@ public class CheckpointManagerTest {
         when(fileConfiguration.getInt("checkpoint-radius")).thenReturn(RADIUS);
 
         Location A = randomLocation;
-        Location closeToA = new Location("TestWorld", A.getX() + RADIUS, A.getY() + RADIUS, A.getZ() + RADIUS, N);
+        Location closeToA = new Location(TEST_WORLD, A.getX() + RADIUS, A.getY() + RADIUS, A.getZ() + RADIUS, N);
 
-        Location B = new Location("TestWorld", 13,50,10,N);
+        Location B = new Location(TEST_WORLD, 13,50,10,N);
 
-        underTest.createCheckpoint("Test-Checkpoint", "TestCourse", CheckpointType.START, A);
+        underTest.createCheckpoint(TEST_CHECKPOINT, TEST_COURSE, CheckpointType.START, A);
 
         assertThat(underTest.isCheckpoint(A).isPresent(), is(true));
         assertThat(underTest.isCheckpoint(closeToA).isPresent(), is(true));
@@ -180,12 +188,20 @@ public class CheckpointManagerTest {
                 CheckpointBuilder.aCheckpoint().from(sampleCheckpoint).withName("2").withType(CheckpointType.FINISH).build()
         );
 
-        underTest.createCheckpoint("1", "Test-Course", CheckpointType.START, randomLocation);
-        underTest.createCheckpoint("2", "Test-Course", CheckpointType.FINISH, randomLocation);
+        underTest.createCheckpoint("1", TEST_COURSE, CheckpointType.START, randomLocation);
+        underTest.createCheckpoint("2", TEST_COURSE, CheckpointType.FINISH, randomLocation);
 
-        List<Checkpoint> result = underTest.getCourse("Test-Course");
+        List<Checkpoint> result = underTest.getCourse(TEST_COURSE);
 
         assertReflectionEquals(result, expectedResult);
+    }
+
+    @Test
+    public void getNoOfCheckpoints() {
+        underTest.createCheckpoint(START_STAGE_NAME, TEST_COURSE, CheckpointType.START, randomLocation);
+        underTest.createCheckpoint(STAGE_STAGE_NAME, TEST_COURSE, CheckpointType.FINISH, randomLocation);
+
+        assertThat(underTest.getNoOfCheckpoints(TEST_COURSE), is(2));
     }
 
     @After

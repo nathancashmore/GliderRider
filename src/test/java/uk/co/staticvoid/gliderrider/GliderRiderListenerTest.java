@@ -14,7 +14,6 @@ import uk.co.staticvoid.gliderrider.business.Bookkeeper;
 import uk.co.staticvoid.gliderrider.business.CheckpointManager;
 import uk.co.staticvoid.gliderrider.business.RecordManager;
 import uk.co.staticvoid.gliderrider.domain.*;
-import uk.co.staticvoid.gliderrider.exception.PlayerCheatedException;
 import uk.co.staticvoid.gliderrider.helper.LocationHelper;
 
 import java.util.LinkedHashMap;
@@ -42,7 +41,7 @@ public class GliderRiderListenerTest {
 
     private static final Long ONE_MINUTE = 60000L;
     private static final Long ONE_SECOND = 1000L;
-    private static final String PLAYER_CHEATED_MESSAGE = "Player Cheated Message";
+    private static final String PLAYER_CHEATED_MESSAGE = "Attempt failed";
 
     private GliderRider plugin = PowerMockito.mock(GliderRider.class);
     private Logger logger = mock(Logger.class);
@@ -153,10 +152,11 @@ public class GliderRiderListenerTest {
     @Test
     public void shouldTellThePlayerIfTheyMissCheckpoints() throws Exception {
         when(checkpointManager.isCheckpoint(LocationHelper.toPluginLocation(bukkitLocation))).thenReturn(Optional.of(FINISH_CHECKPOINT));
+        when(checkpointManager.getNoOfCheckpoints(COURSE)).thenReturn(3);
+        attempt.setFailed(true);
+
         when(bookkeeper.getAttempt(PLAYER, COURSE)).thenReturn(Optional.of(attempt));
 
-        Mockito.doThrow(new PlayerCheatedException(PLAYER_CHEATED_MESSAGE)).when(bookkeeper).seen(PLAYER, FINISH_CHECKPOINT);
-        
         timeMap.put(START_CHECKPOINT_NAME, ONE_SECOND);
         timeMap.put(FINISH_CHECKPOINT_NAME, ONE_MINUTE + ONE_SECOND);
 
