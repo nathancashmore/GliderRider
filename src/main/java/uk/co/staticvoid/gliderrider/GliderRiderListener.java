@@ -58,13 +58,19 @@ public final class GliderRiderListener implements Listener {
         attempt.ifPresent(att -> {
             Long checkpointTime = att.getCourseTime(cp.getName());
 
+            if (checkpointTime != null) {
+                player.sendMessage(cp.getName() + " - " + timeDisplay.format(checkpointTime));
+            }
+
             if(att.isFailed()) {
                 player.sendMessage("Attempt failed");
-
-            } else if (checkpointTime != null) {
-                player.sendMessage(cp.getName() + " - " + timeDisplay.format(checkpointTime));
-                lastSeen.put(player.getDisplayName(), cp.getName());
             }
+
+            if(recordManager.isTheFastestTime(att)) {
+                player.sendMessage("Your in the lead");
+            }
+
+            lastSeen.put(player.getDisplayName(), cp.getName());
         });
     }
 

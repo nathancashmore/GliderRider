@@ -53,6 +53,18 @@ public class RecordManager {
         }
     }
 
+    public boolean isTheFastestTime(Attempt attempt) {
+        Optional<CourseTime> fastestTime = getLeader(attempt.getCourse());
+
+        if(fastestTime.isPresent()) {
+            if(fastestTime.get().getTime() >= (attempt.getCourseTime())) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     @SuppressWarnings("unchecked")
     public void removeRecord(String course) {
         List<CourseRecord> courseRecordList = (List<CourseRecord>)configHelper.getConfig().getList("record");

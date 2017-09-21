@@ -81,6 +81,7 @@ public class GliderRiderListenerTest {
 
         when(player.getLocation()).thenReturn(bukkitLocation);
         when(player.getDisplayName()).thenReturn(PLAYER);
+        when(recordManager.getLeader(COURSE)).thenReturn(Optional.empty());
     }
 
     @Test
@@ -163,6 +164,21 @@ public class GliderRiderListenerTest {
         underTest.onMove(playerMoveEvent);
 
         Mockito.verify(player, times(1)).sendMessage(PLAYER_CHEATED_MESSAGE);
+    }
+
+    @Test
+    public void shouldTellThePlayerIfTheyAreInTheLead() {
+        when(checkpointManager.isCheckpoint(LocationHelper.toPluginLocation(bukkitLocation))).thenReturn(Optional.of(FINISH_CHECKPOINT));
+        when(bookkeeper.getAttempt(PLAYER, COURSE)).thenReturn(Optional.of(attempt));
+        when(recordManager.isTheFastestTime(attempt)).thenReturn(true);
+
+        timeMap.put(START_CHECKPOINT_NAME, ONE_SECOND);
+        timeMap.put(STAGE_CHECKPOINT_NAME, ONE_SECOND * 10);
+        timeMap.put(FINISH_CHECKPOINT_NAME, ONE_MINUTE + ONE_SECOND);
+
+        underTest.onMove(playerMoveEvent);
+
+        Mockito.verify(player).sendMessage("Your in the lead");
     }
 
 }
