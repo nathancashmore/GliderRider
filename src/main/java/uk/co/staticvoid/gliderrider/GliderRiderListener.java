@@ -10,6 +10,7 @@ import uk.co.staticvoid.gliderrider.business.CheckpointManager;
 import uk.co.staticvoid.gliderrider.business.RecordManager;
 import uk.co.staticvoid.gliderrider.domain.Attempt;
 import uk.co.staticvoid.gliderrider.domain.Checkpoint;
+import uk.co.staticvoid.gliderrider.domain.CheckpointType;
 import uk.co.staticvoid.gliderrider.helper.LocationHelper;
 
 import java.text.DateFormat;
@@ -66,7 +67,7 @@ public final class GliderRiderListener implements Listener {
                 player.sendMessage("Attempt failed");
             }
 
-            if(recordManager.isTheFastestTime(att)) {
+            if(recordManager.isTheFastestTime(att) && cp.getType().equals(CheckpointType.FINISH)) {
                 player.sendMessage("Your in the lead");
             }
 
