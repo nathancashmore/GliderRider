@@ -43,6 +43,9 @@ public class Attempt {
     }
 
     public Long getCourseTime(String checkpointName) {
+        if(timeRecord.isEmpty()){
+            return 0L;
+        }
         Long startTime = new ArrayList<>(timeRecord.values()).get(0);
         Long finishTime = timeRecord.get(checkpointName);
 
