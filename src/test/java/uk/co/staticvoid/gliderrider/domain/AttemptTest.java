@@ -42,4 +42,13 @@ public class AttemptTest {
         assertThat(underTest.getCourseTime(FINISH_CHECKPOINT),is(20L));
     }
 
+    @Test
+    public void getCourseTimeForEmptyList() {
+        Map<String, Long> timeMap = new LinkedHashMap<>();
+
+        Attempt underTest = new Attempt(PLAYER, COURSE, timeMap);
+
+        assertThat(underTest.getCourseTime(START_CHECKPOINT), is(0L));
+    }
+
 }
