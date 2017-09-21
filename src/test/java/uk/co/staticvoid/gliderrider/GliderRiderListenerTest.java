@@ -57,7 +57,7 @@ public class GliderRiderListenerTest {
     private GliderRiderListener underTest = new GliderRiderListener(plugin, checkpointManager, bookkeeper, recordManager);
 
     private Map<String, Long> timeMap = new LinkedHashMap<>();
-    private Attempt attempt = new Attempt(PLAYER, COURSE, timeMap);
+    private Attempt attempt;
 
     private Checkpoint START_CHECKPOINT;
     private Checkpoint STAGE_CHECKPOINT;
@@ -78,6 +78,8 @@ public class GliderRiderListenerTest {
         START_CHECKPOINT = new Checkpoint(START_CHECKPOINT_NAME, COURSE, CheckpointType.START, pluginLocation, RADIUS);
         STAGE_CHECKPOINT = new Checkpoint(STAGE_CHECKPOINT_NAME, COURSE, CheckpointType.STAGE, pluginLocation, RADIUS);
         FINISH_CHECKPOINT = new Checkpoint(FINISH_CHECKPOINT_NAME, COURSE, CheckpointType.FINISH, pluginLocation, RADIUS);
+
+        attempt = new Attempt(PLAYER, COURSE, timeMap);
 
         when(player.getLocation()).thenReturn(bukkitLocation);
         when(player.getDisplayName()).thenReturn(PLAYER);
@@ -188,7 +190,22 @@ public class GliderRiderListenerTest {
         when(recordManager.isTheFastestTime(attempt)).thenReturn(true);
 
         timeMap.put(START_CHECKPOINT_NAME, ONE_SECOND);
-        timeMap.put(STAGE_CHECKPOINT_NAME, ONE_SECOND * 10);
+        timeMap.put(STAGE_CHECKPOINT_NAME, ONE_SECOND * 20);
+
+        underTest.onMove(playerMoveEvent);
+
+        Mockito.verify(player, times(0)).sendMessage("Your in the lead");
+    }
+
+    @Test
+    public void shouldNotTellThePlayerTheyAreInTheLeadIfThereAttemptFailed() {
+        when(checkpointManager.isCheckpoint(LocationHelper.toPluginLocation(bukkitLocation))).thenReturn(Optional.of(FINISH_CHECKPOINT));
+        when(bookkeeper.getAttempt(PLAYER, COURSE)).thenReturn(Optional.of(attempt));
+        when(recordManager.isTheFastestTime(attempt)).thenReturn(true);
+        attempt.setFailed(true);
+
+        timeMap.put(START_CHECKPOINT_NAME, ONE_SECOND);
+        timeMap.put(FINISH_CHECKPOINT_NAME, ONE_SECOND * 10);
 
         underTest.onMove(playerMoveEvent);
 
