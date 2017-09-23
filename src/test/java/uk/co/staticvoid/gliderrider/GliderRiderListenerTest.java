@@ -211,4 +211,20 @@ public class GliderRiderListenerTest {
 
         Mockito.verify(player, times(0)).sendMessage("Your in the lead");
     }
+
+    @Test
+    public void shouldTellThePlayerWhenTheyCompleteTheCourse(){
+        when(checkpointManager.isCheckpoint(LocationHelper.toPluginLocation(bukkitLocation))).thenReturn(Optional.of(FINISH_CHECKPOINT));
+        when(bookkeeper.getAttempt(PLAYER, COURSE)).thenReturn(Optional.of(attempt));
+        when(recordManager.isTheFastestTime(attempt)).thenReturn(false);
+        attempt.setFailed(false);
+
+        timeMap.put(START_CHECKPOINT_NAME, ONE_SECOND);
+        timeMap.put(FINISH_CHECKPOINT_NAME, ONE_SECOND * 10);
+
+        underTest.onMove(playerMoveEvent);
+
+        Mockito.verify(player, times(1)).sendMessage("Course Complete");
+
+    }
 }
