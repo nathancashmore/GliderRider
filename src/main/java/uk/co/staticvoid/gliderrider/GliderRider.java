@@ -8,7 +8,9 @@ import uk.co.staticvoid.gliderrider.domain.Checkpoint;
 import uk.co.staticvoid.gliderrider.domain.CourseRecord;
 import uk.co.staticvoid.gliderrider.domain.CourseTime;
 import uk.co.staticvoid.gliderrider.domain.Location;
+import uk.co.staticvoid.gliderrider.helper.BukkitHelper;
 import uk.co.staticvoid.gliderrider.helper.ConfigHelper;
+import uk.co.staticvoid.gliderrider.helper.NotificationHelper;
 import uk.co.staticvoid.gliderrider.helper.TimeProvider;
 import uk.co.staticvoid.gliderrider.task.RecordExportRunnable;
 
@@ -33,14 +35,17 @@ public final class GliderRider extends JavaPlugin {
 
         BlockEditor blockEditor = new BlockEditor();
         TimeProvider timeProvider = new TimeProvider();
+        BukkitHelper bukkitHelper = new BukkitHelper();
         RecordManager recordManager = new RecordManager(recordConfigHelper);
 
         CheckpointArtist checkpointArtist = new CheckpointArtist(this, blockEditor);
         CheckpointManager checkpointManager = new CheckpointManager(this, checkpointConfigHelper , checkpointArtist);
         Bookkeeper bookkeeper = new Bookkeeper(timeProvider, recordManager, checkpointManager);
+        NotificationHelper notificationHelper = new NotificationHelper(bookkeeper, recordManager, bukkitHelper);
+
         RecordExportRunnable recordExportRunnable = new RecordExportRunnable(recordManager);
 
-        this.getServer().getPluginManager().registerEvents(new GliderRiderListener(this, checkpointManager, bookkeeper, recordManager), this);
+        this.getServer().getPluginManager().registerEvents(new GliderRiderListener(checkpointManager, bookkeeper, notificationHelper), this);
 
         CommandExecutor cmdExecutor = new GliderRiderCommandExecutor(this, checkpointManager, recordManager);
 

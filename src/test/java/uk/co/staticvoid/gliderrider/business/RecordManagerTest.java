@@ -127,6 +127,16 @@ public class RecordManagerTest {
     }
 
     @Test
+    public void shouldDetermineIfTheFastestTime() {
+        underTest.addRecord(attempt1);
+        underTest.addRecord(attempt2);
+        underTest.addRecord(attempt3);
+        underTest.addRecord(attempt4);
+
+        assertThat(underTest.isTheFastestTime(attempt3), is(true));
+    }
+
+    @Test
     public void shouldRemoveARecord() {
         underTest.addRecord(attempt1);
         assertThat(underTest.getCourseRecord(COURSE_A).isPresent(), Matchers.is(true));

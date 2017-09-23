@@ -123,4 +123,8 @@ public class CheckpointManager {
                 .filter(cp -> cp.getCourse().equals(course))
                 .collect(Collectors.toList());
     }
+
+    public int getNoOfCheckpoints(String course) {
+        return getCourse(course).size();
+    };
 }

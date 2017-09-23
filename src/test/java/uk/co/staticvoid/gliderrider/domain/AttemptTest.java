@@ -51,4 +51,16 @@ public class AttemptTest {
         assertThat(underTest.getCourseTime(START_CHECKPOINT), is(0L));
     }
 
+    @Test
+    public void getNoOfCheckpointsPassed() {
+        Map<String, Long> timeMap = new LinkedHashMap<>();
+
+        timeMap.put(START_CHECKPOINT, 10L);
+        timeMap.put(STAGE_CHECKPOINT, 20L);
+
+        Attempt underTest = new Attempt(PLAYER, COURSE, timeMap);
+
+        assertThat(underTest.getNoOfCheckpointsPassed(),is(2));
+    }
+
 }

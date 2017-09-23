@@ -9,11 +9,13 @@ import uk.co.staticvoid.gliderrider.domain.Attempt;
 import uk.co.staticvoid.gliderrider.domain.Checkpoint;
 import uk.co.staticvoid.gliderrider.domain.CheckpointType;
 import uk.co.staticvoid.gliderrider.domain.Location;
-import uk.co.staticvoid.gliderrider.exception.PlayerCheatedException;
 import uk.co.staticvoid.gliderrider.helper.CheckpointBuilder;
 import uk.co.staticvoid.gliderrider.helper.TimeProvider;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -41,18 +43,17 @@ public class BookkeeperTest {
     private Bookkeeper underTest = new Bookkeeper(timeProvider, recordManager, checkpointManager);
 
     @Before
-    public void setup() throws PlayerCheatedException {
+    public void setup() {
         startCheckpoint = getSampleCheckpoint(START_CHECKPOINT_NAME, CheckpointType.START);
         stageCheckpoint = getSampleCheckpoint(STAGE_CHECKPOINT_NAME, CheckpointType.STAGE);
         finishCheckpoint = getSampleCheckpoint(FINISH_CHECKPOINT_NAME, CheckpointType.FINISH);
 
         when(timeProvider.timeNow()).thenReturn(TIME_NOW);
-        when(checkpointManager.getCourse(COURSE)).thenReturn(Arrays.asList(startCheckpoint, stageCheckpoint, finishCheckpoint));
+        when(checkpointManager.getNoOfCheckpoints(COURSE)).thenReturn(3);
     }
 
     @Test
-    public void shouldRecordAnAttemptWhenPlayerIsSeenAtCheckpoint() throws PlayerCheatedException {
-
+    public void shouldRecordAnAttemptWhenPlayerIsSeenAtCheckpoint() {
         Attempt expectedAttempt = new Attempt(PLAYER_NAME, COURSE, getSampleTimeEntry(START_CHECKPOINT_NAME));
 
         underTest.seen(PLAYER_NAME, startCheckpoint);
@@ -63,7 +64,7 @@ public class BookkeeperTest {
     }
 
     @Test
-    public void shouldOnlyAllowAttemptsFromTheStart() throws PlayerCheatedException {
+    public void shouldOnlyAllowAttemptsFromTheStart() {
         underTest.seen(PLAYER_NAME, stageCheckpoint);
         underTest.seen(PLAYER_NAME, finishCheckpoint);
 
@@ -71,7 +72,7 @@ public class BookkeeperTest {
     }
 
     @Test
-    public void shouldAddStageTimeToAnAttemptIfThereIsAnExistingAttempt() throws PlayerCheatedException {
+    public void shouldAddStageTimeToAnAttemptIfThereIsAnExistingAttempt() {
         Map<String, Long> expectedTimeMap = new LinkedHashMap<>();
         expectedTimeMap.put(START_CHECKPOINT_NAME, TIME_NOW);
         expectedTimeMap.put(STAGE_CHECKPOINT_NAME, TIME_NOW);
@@ -84,7 +85,7 @@ public class BookkeeperTest {
     }
 
     @Test
-    public void shouldMarkAnAttemptedFinishedWhenFinishCheckpointReached() throws PlayerCheatedException {
+    public void shouldMarkAnAttemptedFinishedWhenFinishCheckpointReached() {
         underTest.seen(PLAYER_NAME, startCheckpoint);
         underTest.seen(PLAYER_NAME, stageCheckpoint);
         underTest.seen(PLAYER_NAME, finishCheckpoint);
@@ -92,8 +93,8 @@ public class BookkeeperTest {
         assertThat(underTest.getAttempt(PLAYER_NAME, COURSE).get().isFinished(), Matchers.is(true));
     }
 
-    @Test(expected = PlayerCheatedException.class)
-    public void shouldNotNotifyRecordManagerUnlessAllTheCourseCheckpointsWerePassed() throws PlayerCheatedException {
+    @Test
+    public void shouldNotNotifyRecordManagerUnlessAllTheCourseCheckpointsWerePassed() {
         underTest.seen(PLAYER_NAME, startCheckpoint);
         underTest.seen(PLAYER_NAME, finishCheckpoint);
 
@@ -101,7 +102,7 @@ public class BookkeeperTest {
     }
 
     @Test
-    public void shouldNotifyRecordManagerWhenFinalCheckpointReached() throws PlayerCheatedException {
+    public void shouldNotifyRecordManagerWhenFinalCheckpointReached() {
         underTest.seen(PLAYER_NAME, startCheckpoint);
         underTest.seen(PLAYER_NAME, stageCheckpoint);
         underTest.seen(PLAYER_NAME, finishCheckpoint);
@@ -110,13 +111,22 @@ public class BookkeeperTest {
     }
 
     @Test
-    public void shouldOnlyHaveOneAttemptHappeningAtOneTime() throws PlayerCheatedException {
+    public void shouldFailAnAttemptIfACheckpointIsSkipped() {
+        underTest.seen(PLAYER_NAME, startCheckpoint);
+        underTest.seen(PLAYER_NAME, finishCheckpoint);
+
+        assertThat(underTest.getAttempt(PLAYER_NAME, COURSE).get().isFailed(), Matchers.is(true));
+    }
+
+    @Test
+    public void shouldOnlyHaveOneAttemptHappeningAtOneTime() {
         Map<String, Long> expectedTimeMap = new LinkedHashMap<>();
         expectedTimeMap.put(START_CHECKPOINT_NAME, TIME_NOW);
         expectedTimeMap.put(STAGE_CHECKPOINT_NAME, TIME_NOW);
         expectedTimeMap.put(FINISH_CHECKPOINT_NAME, TIME_NOW);
         Attempt expectedAttempt = new Attempt(PLAYER_NAME, COURSE, expectedTimeMap);
         expectedAttempt.setFinished(true);
+        expectedAttempt.setFailed(false);
 
         underTest.seen(PLAYER_NAME, startCheckpoint);
         underTest.seen(PLAYER_NAME, startCheckpoint);
