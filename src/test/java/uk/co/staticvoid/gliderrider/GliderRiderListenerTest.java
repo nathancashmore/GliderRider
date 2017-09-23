@@ -12,56 +12,48 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import uk.co.staticvoid.gliderrider.business.Bookkeeper;
 import uk.co.staticvoid.gliderrider.business.CheckpointManager;
-import uk.co.staticvoid.gliderrider.business.RecordManager;
-import uk.co.staticvoid.gliderrider.domain.*;
+import uk.co.staticvoid.gliderrider.domain.Checkpoint;
+import uk.co.staticvoid.gliderrider.domain.CheckpointType;
+import uk.co.staticvoid.gliderrider.domain.Direction;
+import uk.co.staticvoid.gliderrider.domain.Location;
 import uk.co.staticvoid.gliderrider.helper.LocationHelper;
+import uk.co.staticvoid.gliderrider.helper.NotificationHelper;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Optional;
 import java.util.logging.Logger;
 
 import static org.mockito.Mockito.*;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({GliderRider.class, PlayerMoveEvent.class})
+@PrepareForTest({GliderRider.class})
 public class GliderRiderListenerTest {
 
-    private static final String START_CHECKPOINT_NAME = "StartTestCheckpoint";
-    private static final String STAGE_CHECKPOINT_NAME = "StageTestCheckpoint";
-    private static final String FINISH_CHECKPOINT_NAME = "FinishTestCheckpoint";
+    private static final String CHECKPOINT = "StartTestCheckpoint";
     private static final String COURSE = "TestCourse";
-    private static final Integer RADIUS = 2;
+    private static final String PLAYER = "TestPlayer";
     private static final String WORLD = "TestWorld";
+    private static final Integer RADIUS = 2;
     private static final Float NORTH_YAW = -180f;
     private static final Double X = 10d;
     private static final Double Y = 10d;
     private static final Double Z = 10d;
-    private static final String PLAYER = "TestPlayer";
-
-    private static final Long ONE_MINUTE = 60000L;
-    private static final Long ONE_SECOND = 1000L;
-    private static final String PLAYER_CHEATED_MESSAGE = "Attempt failed";
 
     private GliderRider plugin = PowerMockito.mock(GliderRider.class);
     private Logger logger = mock(Logger.class);
     private Player player = mock(Player.class);
     private org.bukkit.Location bukkitLocation = mock(org.bukkit.Location.class);
     private World world = mock(World.class);
+
     private PlayerMoveEvent playerMoveEvent = new PlayerMoveEvent(player, bukkitLocation, bukkitLocation);
 
     private CheckpointManager checkpointManager = mock(CheckpointManager.class);
     private Bookkeeper bookkeeper = mock(Bookkeeper.class);
-    private RecordManager recordManager = mock(RecordManager.class);
+    private NotificationHelper notificationHelper = mock(NotificationHelper.class);
 
-    private GliderRiderListener underTest = new GliderRiderListener(plugin, checkpointManager, bookkeeper, recordManager);
+    private GliderRiderListener underTest = new GliderRiderListener(checkpointManager, bookkeeper, notificationHelper);
 
-    private Map<String, Long> timeMap = new LinkedHashMap<>();
-    private Attempt attempt;
-
-    private Checkpoint START_CHECKPOINT;
-    private Checkpoint STAGE_CHECKPOINT;
-    private Checkpoint FINISH_CHECKPOINT;
+    private Checkpoint checkpoint;
+    private Location pluginLocation;
 
     @Before
     public void setup() {
@@ -74,157 +66,42 @@ public class GliderRiderListenerTest {
         when(bukkitLocation.getZ()).thenReturn(Z);
         when(bukkitLocation.getYaw()).thenReturn(NORTH_YAW);
 
-        Location pluginLocation = new Location(world.getName(), X.intValue(), Y.intValue(), Z.intValue(), Direction.N);
-        START_CHECKPOINT = new Checkpoint(START_CHECKPOINT_NAME, COURSE, CheckpointType.START, pluginLocation, RADIUS);
-        STAGE_CHECKPOINT = new Checkpoint(STAGE_CHECKPOINT_NAME, COURSE, CheckpointType.STAGE, pluginLocation, RADIUS);
-        FINISH_CHECKPOINT = new Checkpoint(FINISH_CHECKPOINT_NAME, COURSE, CheckpointType.FINISH, pluginLocation, RADIUS);
-
-        attempt = new Attempt(PLAYER, COURSE, timeMap);
+        pluginLocation = new Location(WORLD, X.intValue(), Y.intValue(), Z.intValue(), Direction.N);
+        checkpoint = new Checkpoint(CHECKPOINT, COURSE, CheckpointType.START, pluginLocation, RADIUS);
 
         when(player.getLocation()).thenReturn(bukkitLocation);
         when(player.getDisplayName()).thenReturn(PLAYER);
-        when(recordManager.getLeader(COURSE)).thenReturn(Optional.empty());
     }
 
     @Test
-    public void shouldSendCheckpointMessageToPlayerWhenPassingSTARTCheckpoint() {
-        when(checkpointManager.isCheckpoint(LocationHelper.toPluginLocation(bukkitLocation))).thenReturn(Optional.of(START_CHECKPOINT));
-        when(bookkeeper.getAttempt(PLAYER, COURSE)).thenReturn(Optional.of(attempt));
-
-        timeMap.put(START_CHECKPOINT_NAME, ONE_SECOND);
+    public void shouldNotifyPlayerIfPassingCheckpoint() {
+        when(checkpointManager.isCheckpoint(LocationHelper.toPluginLocation(bukkitLocation))).thenReturn(Optional.of(checkpoint));
 
         underTest.onMove(playerMoveEvent);
 
-        Mockito.verify(player).sendMessage("StartTestCheckpoint - 00:00:000");
+        Mockito.verify(bookkeeper).seen(PLAYER, checkpoint);
+        Mockito.verify(notificationHelper).informPlayerOfCheckpoint(player, checkpoint);
     }
 
     @Test
-    public void shouldSendCheckpointMessageToPlayerWhenPassingSTAGECheckpoint() {
-        when(checkpointManager.isCheckpoint(LocationHelper.toPluginLocation(bukkitLocation))).thenReturn(Optional.of(STAGE_CHECKPOINT));
-        when(bookkeeper.getAttempt(PLAYER, COURSE)).thenReturn(Optional.of(attempt));
-
-        timeMap.put(START_CHECKPOINT_NAME, ONE_SECOND);
-        timeMap.put(STAGE_CHECKPOINT_NAME, ONE_SECOND * 10);
+    public void shouldNotNotifyPlayerIfNotPassingCheckpoint() {
+        when(checkpointManager.isCheckpoint(LocationHelper.toPluginLocation(bukkitLocation))).thenReturn(Optional.empty());
 
         underTest.onMove(playerMoveEvent);
 
-        Mockito.verify(player).sendMessage("StageTestCheckpoint - 00:09:000");
-    }
-
-    @Test
-    public void shouldSendCheckpointMessageToPlayerWhenPassingFINISHCheckpoint() {
-        when(checkpointManager.isCheckpoint(LocationHelper.toPluginLocation(bukkitLocation))).thenReturn(Optional.of(FINISH_CHECKPOINT));
-        when(bookkeeper.getAttempt(PLAYER, COURSE)).thenReturn(Optional.of(attempt));
-
-        timeMap.put(START_CHECKPOINT_NAME, ONE_SECOND);
-        timeMap.put(STAGE_CHECKPOINT_NAME, ONE_SECOND * 10);
-        timeMap.put(FINISH_CHECKPOINT_NAME, ONE_MINUTE + ONE_SECOND);
-
-        underTest.onMove(playerMoveEvent);
-
-        Mockito.verify(player).sendMessage("FinishTestCheckpoint - 01:00:000");
-    }
-
-    @Test
-    public void shouldNotSendMessageIfCheckpointNotInAttempt() {
-        when(checkpointManager.isCheckpoint(LocationHelper.toPluginLocation(bukkitLocation))).thenReturn(Optional.of(FINISH_CHECKPOINT));
-        when(bookkeeper.getAttempt(PLAYER, COURSE)).thenReturn(Optional.empty());
-
-        timeMap.put(START_CHECKPOINT_NAME, ONE_SECOND);
-        timeMap.put(STAGE_CHECKPOINT_NAME, ONE_SECOND * 10);
-        timeMap.put(FINISH_CHECKPOINT_NAME, ONE_MINUTE + ONE_SECOND);
-
-        underTest.onMove(playerMoveEvent);
-
-        Mockito.verify(player, times(0)).sendMessage(Mockito.anyString());
+        Mockito.verifyZeroInteractions(bookkeeper);
+        Mockito.verifyZeroInteractions(notificationHelper);
     }
 
     @Test
     public void shouldOnlySendMessageOnceForTheSameCheckpoint(){
-        when(checkpointManager.isCheckpoint(LocationHelper.toPluginLocation(bukkitLocation))).thenReturn(Optional.of(START_CHECKPOINT));
-        when(bookkeeper.getAttempt(PLAYER, COURSE)).thenReturn(Optional.of(attempt));
-
-        timeMap.put(START_CHECKPOINT_NAME, ONE_SECOND);
+        when(checkpointManager.isCheckpoint(LocationHelper.toPluginLocation(bukkitLocation))).thenReturn(Optional.of(checkpoint));
 
         underTest.onMove(playerMoveEvent);
         underTest.onMove(playerMoveEvent);
+        underTest.onMove(playerMoveEvent);
 
-        Mockito.verify(player, times(1)).sendMessage("StartTestCheckpoint - 00:00:000");
+        Mockito.verify(notificationHelper, times(1)).informPlayerOfCheckpoint(player, checkpoint);
     }
 
-    @Test
-    public void shouldTellThePlayerIfTheyMissCheckpoints() throws Exception {
-        when(checkpointManager.isCheckpoint(LocationHelper.toPluginLocation(bukkitLocation))).thenReturn(Optional.of(FINISH_CHECKPOINT));
-        when(checkpointManager.getNoOfCheckpoints(COURSE)).thenReturn(3);
-        attempt.setFailed(true);
-
-        when(bookkeeper.getAttempt(PLAYER, COURSE)).thenReturn(Optional.of(attempt));
-
-        timeMap.put(START_CHECKPOINT_NAME, ONE_SECOND);
-        timeMap.put(FINISH_CHECKPOINT_NAME, ONE_MINUTE + ONE_SECOND);
-
-        underTest.onMove(playerMoveEvent);
-
-        Mockito.verify(player, times(1)).sendMessage(PLAYER_CHEATED_MESSAGE);
-    }
-
-    @Test
-    public void shouldTellThePlayerIfTheyAreInTheLeadAtTheFinish() {
-        when(checkpointManager.isCheckpoint(LocationHelper.toPluginLocation(bukkitLocation))).thenReturn(Optional.of(FINISH_CHECKPOINT));
-        when(bookkeeper.getAttempt(PLAYER, COURSE)).thenReturn(Optional.of(attempt));
-        when(recordManager.isTheFastestTime(attempt)).thenReturn(true);
-
-        timeMap.put(START_CHECKPOINT_NAME, ONE_SECOND);
-        timeMap.put(STAGE_CHECKPOINT_NAME, ONE_SECOND * 10);
-        timeMap.put(FINISH_CHECKPOINT_NAME, ONE_MINUTE + ONE_SECOND);
-
-        underTest.onMove(playerMoveEvent);
-
-        Mockito.verify(player).sendMessage("Your in the lead");
-    }
-
-    @Test
-    public void shouldNotTellThePlayerTheyAreInTheLeadBeforeTheFinish() {
-        when(checkpointManager.isCheckpoint(LocationHelper.toPluginLocation(bukkitLocation))).thenReturn(Optional.of(STAGE_CHECKPOINT));
-        when(bookkeeper.getAttempt(PLAYER, COURSE)).thenReturn(Optional.of(attempt));
-        when(recordManager.isTheFastestTime(attempt)).thenReturn(true);
-
-        timeMap.put(START_CHECKPOINT_NAME, ONE_SECOND);
-        timeMap.put(STAGE_CHECKPOINT_NAME, ONE_SECOND * 20);
-
-        underTest.onMove(playerMoveEvent);
-
-        Mockito.verify(player, times(0)).sendMessage("Your in the lead");
-    }
-
-    @Test
-    public void shouldNotTellThePlayerTheyAreInTheLeadIfThereAttemptFailed() {
-        when(checkpointManager.isCheckpoint(LocationHelper.toPluginLocation(bukkitLocation))).thenReturn(Optional.of(FINISH_CHECKPOINT));
-        when(bookkeeper.getAttempt(PLAYER, COURSE)).thenReturn(Optional.of(attempt));
-        when(recordManager.isTheFastestTime(attempt)).thenReturn(true);
-        attempt.setFailed(true);
-
-        timeMap.put(START_CHECKPOINT_NAME, ONE_SECOND);
-        timeMap.put(FINISH_CHECKPOINT_NAME, ONE_SECOND * 10);
-
-        underTest.onMove(playerMoveEvent);
-
-        Mockito.verify(player, times(0)).sendMessage("Your in the lead");
-    }
-
-    @Test
-    public void shouldTellThePlayerWhenTheyCompleteTheCourse(){
-        when(checkpointManager.isCheckpoint(LocationHelper.toPluginLocation(bukkitLocation))).thenReturn(Optional.of(FINISH_CHECKPOINT));
-        when(bookkeeper.getAttempt(PLAYER, COURSE)).thenReturn(Optional.of(attempt));
-        when(recordManager.isTheFastestTime(attempt)).thenReturn(false);
-        attempt.setFailed(false);
-
-        timeMap.put(START_CHECKPOINT_NAME, ONE_SECOND);
-        timeMap.put(FINISH_CHECKPOINT_NAME, ONE_SECOND * 10);
-
-        underTest.onMove(playerMoveEvent);
-
-        Mockito.verify(player, times(1)).sendMessage("Course Complete");
-
-    }
 }

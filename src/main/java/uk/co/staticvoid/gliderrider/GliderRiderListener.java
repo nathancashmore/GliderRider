@@ -7,34 +7,24 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
 import uk.co.staticvoid.gliderrider.business.Bookkeeper;
 import uk.co.staticvoid.gliderrider.business.CheckpointManager;
-import uk.co.staticvoid.gliderrider.business.RecordManager;
-import uk.co.staticvoid.gliderrider.domain.Attempt;
-import uk.co.staticvoid.gliderrider.domain.Checkpoint;
-import uk.co.staticvoid.gliderrider.domain.CheckpointType;
 import uk.co.staticvoid.gliderrider.helper.LocationHelper;
+import uk.co.staticvoid.gliderrider.helper.NotificationHelper;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 public final class GliderRiderListener implements Listener {
 
-    private DateFormat timeDisplay = new SimpleDateFormat("mm:ss:SSS");
-
-    private final GliderRider plugin;
     private final CheckpointManager checkpointManager;
     private final Bookkeeper bookkeeper;
-    private final RecordManager recordManager;
+    private final NotificationHelper notificationHelper;
 
     private Map<String, String> lastSeen = new HashMap<>();
 
-    public GliderRiderListener(GliderRider plugin, CheckpointManager checkpointManager, Bookkeeper bookkeeper, RecordManager recordManager) {
-        this.plugin = plugin;
+    public GliderRiderListener(CheckpointManager checkpointManager, Bookkeeper bookkeeper, NotificationHelper notificationHelper) {
         this.checkpointManager = checkpointManager;
         this.bookkeeper = bookkeeper;
-        this.recordManager = recordManager;
+        this.notificationHelper = notificationHelper;
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -42,41 +32,14 @@ public final class GliderRiderListener implements Listener {
         Player player = event.getPlayer();
 
         checkpointManager.isCheckpoint(
-                LocationHelper.toPluginLocation(player.getLocation())).ifPresent(
-                cp -> {
-                    bookkeeper.seen(player.getDisplayName(), cp);
+            LocationHelper.toPluginLocation(player.getLocation())).ifPresent(
+            cp -> {
+                bookkeeper.seen(player.getDisplayName(), cp);
 
-                    if (!cp.getName().equals(lastSeen.get(player.getDisplayName()))) {
-                        informPlayerOfCheckpoint(player, cp);
-                    }
-                });
-    }
-
-    private void informPlayerOfCheckpoint(Player player, Checkpoint cp) {
-
-        Optional<Attempt> attempt = bookkeeper.getAttempt(player.getDisplayName(), cp.getCourse());
-
-        attempt.ifPresent(att -> {
-            Long checkpointTime = att.getCourseTime(cp.getName());
-
-            if (checkpointTime != null) {
-                player.sendMessage(cp.getName() + " - " + timeDisplay.format(checkpointTime));
-            }
-
-            if(att.isFailed()) {
-                player.sendMessage("Attempt failed");
-            }
-
-            if (cp.getType().equals(CheckpointType.FINISH) && !att.isFailed()) {
-                if(recordManager.isTheFastestTime(att)){
-                    player.sendMessage("Your in the lead");
-                } else {
-                    player.sendMessage("Course Complete");
+                if (!cp.getName().equals(lastSeen.get(player.getDisplayName()))) {
+                    notificationHelper.informPlayerOfCheckpoint(player, cp);
+                    lastSeen.put(player.getDisplayName(), cp.getName());
                 }
-            }
-
-            lastSeen.put(player.getDisplayName(), cp.getName());
-        });
+            });
     }
-
 }
