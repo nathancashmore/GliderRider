@@ -1,0 +1,42 @@
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: minecraft-srv
+  labels:
+    app: minecraft-srv
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minecraft-srv
+  template:
+    metadata:
+      labels:
+        app: minecraft-srv
+    spec:
+      containers:
+      - name: minecraft-srv
+        image: itzg/minecraft-server:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 25565
+        env:
+          - name: "EULA"
+            value: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minecraft-svc
+  annotations:
+      external-dns.alpha.kubernetes.io/hostname: minecraft.staticvoid.co.uk.
+  labels:
+    app: minecraft-srv
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 25565
+      targetPort: 25565
+  selector:
+    app: minecraft-srv
