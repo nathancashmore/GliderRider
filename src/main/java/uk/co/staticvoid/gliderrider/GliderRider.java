@@ -12,11 +12,13 @@ import uk.co.staticvoid.gliderrider.helper.BukkitHelper;
 import uk.co.staticvoid.gliderrider.helper.ConfigHelper;
 import uk.co.staticvoid.gliderrider.helper.NotificationHelper;
 import uk.co.staticvoid.gliderrider.helper.TimeProvider;
+import uk.co.staticvoid.gliderrider.task.MovementMonitorRunnable;
 import uk.co.staticvoid.gliderrider.task.RecordExportRunnable;
 
 public final class GliderRider extends JavaPlugin {
 
     private static final Long EXPORT_TO_JSON_INTERVAL = 100L;
+    private static final Long MOVEMENT_MONITOR_INTERVAL = 20L; //Approx one second
 
     @Override
     public void onEnable() {
@@ -44,8 +46,7 @@ public final class GliderRider extends JavaPlugin {
         NotificationHelper notificationHelper = new NotificationHelper(bookkeeper, recordManager, bukkitHelper);
 
         RecordExportRunnable recordExportRunnable = new RecordExportRunnable(recordManager);
-
-        this.getServer().getPluginManager().registerEvents(new GliderRiderListener(checkpointManager, bookkeeper, notificationHelper), this);
+        MovementMonitorRunnable movementMonitorRunnable = new MovementMonitorRunnable(checkpointManager, bookkeeper, notificationHelper, bukkitHelper);
 
         CommandExecutor cmdExecutor = new GliderRiderCommandExecutor(this, checkpointManager, recordManager);
 
@@ -57,6 +58,7 @@ public final class GliderRider extends JavaPlugin {
         this.getCommand("records-remove").setExecutor(cmdExecutor);
 
         recordExportRunnable.runTaskTimer(this, 0L, EXPORT_TO_JSON_INTERVAL);
+        movementMonitorRunnable.runTaskTimerAsynchronously(this, 0L, MOVEMENT_MONITOR_INTERVAL);
     }
 
     @Override
