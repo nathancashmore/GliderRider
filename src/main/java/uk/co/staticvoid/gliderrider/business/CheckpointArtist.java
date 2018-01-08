@@ -64,7 +64,8 @@ public class CheckpointArtist {
         });
 
         cornerLocationList.forEach(loc -> {
-            blockEditor.changeBlockMaterial(loc, LIGHT_MATERIAL);
+            Material material = action == Action.ADD ? LIGHT_MATERIAL : Material.AIR;
+            blockEditor.changeBlockMaterial(loc, material);
         });
 
     }

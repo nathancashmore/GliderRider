@@ -27,11 +27,11 @@ import static org.mockito.Mockito.*;
  *    1 2 3 4 5 6 7 8 9 10
  *  1         .
  *  2         .
- *  3       o o o
+ *  3     G o o o G
  *  4     o   .   o
  *  5 . . o . x . o . . . .
  *  6     o   .   o
- *  7       o o o
+ *  7     G o o o G
  *  8         .
  *  9         .
  *  10        .
@@ -39,7 +39,10 @@ import static org.mockito.Mockito.*;
  *  Where in this example:
  *  x = (x:5, y:5)
  *  radius = 2
- *  total number of blocks = 12
+ *  total number of blocks =
+ *  - 12 checkpoint blocks (o)
+ *  - 4 glowstone blocks (G)
+ *  = 16
  */
 
 @RunWith(PowerMockRunner.class)
@@ -80,10 +83,17 @@ public class CheckpointArtistTest {
     }
 
     @Test
+    public void shouldUseLightMaterialWhenBuildingACheckpoint() {
+        Checkpoint startCheckpoint = CheckpointBuilder.aCheckpoint().from(sampleCheckpointNorth).withType(CheckpointType.START).build();
+        underTest.drawCheckpoint(startCheckpoint);
+        verify(blockEditor, times(4)).changeBlockMaterial(anyObject(), Mockito.eq(CheckpointArtist.LIGHT_MATERIAL));
+    }
+
+    @Test
     public void shouldReplaceBlocksForAirWhenRemoved() {
         Checkpoint startCheckpoint = CheckpointBuilder.aCheckpoint().from(sampleCheckpointNorth).build();
         underTest.eraseCheckpoint(startCheckpoint);
-        verify(blockEditor, times(12)).changeBlockMaterial(anyObject(), Mockito.eq(Material.AIR));
+        verify(blockEditor, times(12 + 4)).changeBlockMaterial(anyObject(), Mockito.eq(Material.AIR));
     }
 
     @Test
