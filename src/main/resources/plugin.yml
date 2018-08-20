@@ -1,6 +1,7 @@
 name: GliderRider
 main: uk.co.staticvoid.gliderrider.GliderRider
-version: 1.3
+version: 1.4
+api-version: 1.13
 author: MajorSlackmore
 commands:
    checkpoint-create:

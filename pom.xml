@@ -6,7 +6,7 @@
 
     <groupId>uk.co.staticvoid</groupId>
     <artifactId>GliderRider</artifactId>
-    <version>1.3</version>
+    <version>1.4</version>
 
     <properties>
         <testSpigotPluginDir>${basedir}/../Spigot/plugins</testSpigotPluginDir>
@@ -82,7 +82,7 @@
         <dependency>
             <groupId>org.bukkit</groupId>
             <artifactId>bukkit</artifactId>
-            <version>1.12.1-R0.1-SNAPSHOT</version>
+            <version>1.13-R0.1-SNAPSHOT</version>
             <type>jar</type>
             <scope>provided</scope>
         </dependency>
